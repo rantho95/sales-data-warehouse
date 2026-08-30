@@ -1,11 +1,16 @@
 /* 
 ================================================================================================
-CREATE DATABASE AND SCHEMAS
+CREATE DATABASE, SCHEMAS, AND TBALES
 ================================================================================================
 Script Purpose:
   This script creates a new database named 'DataWarehouse' after checking if it's not existing first.
   If the database does not exist, it gets created. Additionally, the script sets up four schemas within
   the database: 'etl','Staging','Dim','fact'.
+
+  The script also creates tables in each of the schemas labeled above, dropping existing tables if they already
+  exists.
+
+  Run this script to re-define the DDL structure of the tables
 */
 
 USE master;

@@ -40,42 +40,13 @@ Document known limitations and assumptions.
 Provide sufficient context for both technical and analytical users to understand the model.
 Architecture
 
-The project is organized into separate database schemas according to the role of each object within the warehouse:
-
-Source CSV
-    │
-    ▼
-┌───────────────┐
-│    Staging    │
-│   SalesRaw    │
-└───────┬───────┘
-        │
-        ▼
-┌──────────────────────────────┐
-│         Transformation       │
-│  Cleaning / Normalization    │
-└──────────────┬────────────────┘
-               │
-               ▼
-        ┌──────────────┐
-        │  Star Schema │
-        └──────┬───────┘
-               │
-       ┌───────┴────────┐
-       ▼                ▼
-   Dimensions        Fact Table
-   ──────────        ──────────
-   DimDate           FactSales
-   DimCustomer
-   DimProduct
-   DimGeography
    
 ### Schema	Purpose
-Staging	Holds raw source data before transformation
-Dim	Contains dimension tables used for analytical slicing and filtering
-Fact	Contains measurable sales events
-etl	Contains stored procedures responsible for loading and processing warehouse data
-Data Model
+1. Staging	Holds raw source data before transformation
+2. Dim	Contains dimension tables used for analytical slicing and filtering
+3. Fact	Contains measurable sales events
+4. etl	Contains stored procedures responsible for loading and processing warehouse data
+    Data Model
 
 The final analytical layer uses a star schema centered on fact.FactSales.
 
@@ -86,10 +57,10 @@ fact.FactSales — contains the measurable sales events and foreign keys linking
 Key measures: Units, UnitCost, UnitPrice.
 
 Dimension Tables
-dim.DimDate — provides the calendar context required for time-based analysis.
-dim.DimProduct — contains product-related descriptive attributes and product-level measures such as cost and selling price.
-dim.DimCustomer — contains customer attributes such as name, email, and the customer's geographic reference.
-dim.DimGeography — contains reusable geographic attributes: ZipCode, City, State, Region, District, Country.
+dim.DimDate —> provides the calendar context required for time-based analysis.
+dim.DimProduct —> contains product related descriptive attributes and product-level measures such as cost and selling price.
+dim.DimCustomer —> contains customer attributes such as name, email, and the customer's geographic reference.
+dim.DimGeography —> contains reusable geographic attributes: ZipCode, City, State, Region, District, Country.
 Key Design Decisions
 
 Several decisions in this project required more than simply following a predefined template. The source data was analyzed first, and the warehouse design was adapted where the evidence supported it.
@@ -107,9 +78,8 @@ etl     → Data-loading processes
 
 4. Exact duplicate fact records were removed. The source dataset has no unique transaction identifier and no time-of-day precision, so it wasn't possible to definitively determine whether a repeated row was a genuine separate purchase or an accidental duplication in the source export. 133 exact full-row duplicates were identified. Since the fact table is meant to represent distinct sales events, these were treated as accidental duplicates and removed — verified with a before/after reconciliation (675,368 → 675,235 rows, 133 removed), rather than assumed or silently dropped without documentation.
 
-5. Zero-variance attributes were retained. Country and Manufacturer are kept in the model even though every record in the current dataset shares the same value for both. They weren't removed just because they currently have only one distinct value — that limitation is documented here as a characteristic of this dataset, not hidden. The model stays structurally capable of supporting real variation if a broader dataset is introduced later, and this also avoids treating a one-row GROUP BY result as meaningful analytical variation.
 
-6. TRUNCATE vs. DELETE in the ETL process. The ETL process accounts for SQL Server's foreign-key behavior when clearing tables before reloading. A common assumption is that tables can simply be truncated in "child-before-parent" order — but SQL Server blocks TRUNCATE TABLE on any table referenced by a foreign key constraint, even if the referencing table is empty. The reload strategy reflects this: fact.FactSales (referenced by nothing) uses TRUNCATE TABLE; dimensions referenced by foreign-key relationships (DimCustomer, DimGeography, DimProduct, DimDate) use DELETE FROM instead. This respects the database's referential constraints while still providing a fully repeatable reload process.
+5. TRUNCATE vs. DELETE in the ETL process. The ETL process accounts for SQL Server's foreign-key behavior when clearing tables before reloading. A common assumption is that tables can simply be truncated in "child-before-parent" order — but SQL Server blocks TRUNCATE TABLE on any table referenced by a foreign key constraint, even if the referencing table is empty. The reload strategy reflects this: fact.FactSales (referenced by nothing) uses TRUNCATE TABLE; dimensions referenced by foreign-key relationships (DimCustomer, DimGeography, DimProduct, DimDate) use DELETE FROM instead. This respects the database's referential constraints while still providing a fully repeatable reload process.
 
 Data Quality & Validation
 
@@ -148,38 +118,6 @@ SQL Server Management Studio (SSMS)
 Dimensional Modeling / Star Schema
 ETL via T-SQL stored procedures
 
-Project Structure
-sales-data-warehouse/
-│
-├── datasets/
-│   └── sales.csv
-│
-├── sql/
-│   ├── staging/
-│   ├── dim_fact/          -- normalization logic (etl schema procs)
-│   ├── tests/              -- data quality validation
-│   └── init_database.sql
-│
-├── docs/
-│   └── data_model/         -- ERD / logical model
-│
-└── README.md
-Project Outcome
-Raw CSV
-   ↓
-Staging
-   ↓
-Data Cleaning & Transformation
-   ↓
-Dimensional Modeling
-   ↓
-Dimension Loading
-   ↓
-Fact Loading
-   ↓
-Data Quality Validation
-   ↓
-Analytical Data Warehouse
 
 This project focuses not only on implementing the technical components of a warehouse, but on understanding the source data, documenting assumptions, validating transformation decisions, and designing a model that can support real analytical workloads.
 

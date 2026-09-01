@@ -1,6 +1,6 @@
 # Sales Data Warehouse
 
-A SQL Server data warehouse project built from a raw sales CSV dataset. The project demonstrates an end-to-end data warehousing workflow — from raw data ingestion and transformation, through dimensional modeling, ETL processing, and data quality validation.
+A SQL Server data warehouse project built from a raw sales CSV dataset. The project demonstrates an end-to-end data warehousing workflow, from raw data ingestion and transformation, through dimensional modeling, ETL processing, and data quality validation.
 
 The primary goal of this project was not simply to build a pipeline that runs, but to make defensible data modeling and transformation decisions based on the actual characteristics of the source data.
 
@@ -14,7 +14,7 @@ Project Requirements
 Data Ingestion
 Import the source sales data provided as a CSV file.
 Preserve the raw source data in a staging environment before transformation.
-Handle source-data inconsistencies and conversion issues during the ETL process.
+Handle source data inconsistencies and conversion issues during the ETL process.
 Data Quality
 Identify and resolve data quality issues before loading the analytical model.
 Validate NULL and blank values.
@@ -43,10 +43,10 @@ Architecture
    
 ### Schema	Purpose
 1. Staging	Holds raw source data before transformation
-2. Dim	Contains dimension tables used for analytical slicing and filtering
-3. Fact	Contains measurable sales events
-4. etl	Contains stored procedures responsible for loading and processing warehouse data
-    Data Model
+2. Dim Contains dimension tables used for analytical slicing and filtering
+3. Fact Contains measurable sales events
+4. etl Contains stored procedures responsible for loading and processing warehouse data
+   Data Model
 
 The final analytical layer uses a star schema centered on fact.FactSales.
 
@@ -74,12 +74,12 @@ etl     → Data-loading processes
 
 2. Geography was modeled as a separate dimension. DimGeography was created as its own dimension rather than storing geographic attributes directly in DimCustomer. This was based on analyzing the source data first, not assumed: the dataset has roughly 282,596 customers, but only 29,189 distinct combinations of ZipCode/City/State/Region/District/Country. That means many customers share the same geographic information — keeping geography in its own dimension avoids repeating the same descriptive attributes across a large number of customer records, and gives the model a reusable geographic entity for analytical queries.
 
-3. Surrogate keys were used for dimensions. The dimension tables use integer surrogate keys (ProductKey, CustomerKey, GeographyKey, DateKey) as their actual primary keys, while retaining the original business keys (ProductID, CustomerID) with uniqueness constraints for traceability. This gives faster integer-based joins, separates warehouse identifiers from source-system identifiers, and — most importantly — supports Slowly Changing Dimensions (SCD) if historization is introduced later. A future customer dimension, for example, could hold multiple versions of the same CustomerID, each with a different CustomerKey, preserving historical attribute changes.
+3. Surrogate keys were used for dimensions. The dimension tables use integer surrogate keys (ProductKey, CustomerKey, GeographyKey, DateKey) as their actual primary keys, while retaining the original business keys (ProductID, CustomerID) with uniqueness constraints for traceability. This gives faster integer-based joins, separates warehouse identifiers from source-system identifiers, and  most importantly, supports Slowly Changing Dimensions (SCD) if historization is introduced later. A future customer dimension, for example, could hold multiple versions of the same CustomerID, each with a different CustomerKey, preserving historical attribute changes.
 
-4. Exact duplicate fact records were removed. The source dataset has no unique transaction identifier and no time-of-day precision, so it wasn't possible to definitively determine whether a repeated row was a genuine separate purchase or an accidental duplication in the source export. 133 exact full-row duplicates were identified. Since the fact table is meant to represent distinct sales events, these were treated as accidental duplicates and removed — verified with a before/after reconciliation (675,368 → 675,235 rows, 133 removed), rather than assumed or silently dropped without documentation.
+4. Exact duplicate fact records were removed. The source dataset has no unique transaction identifier and no time-of-day precision, so it wasn't possible to definitively determine whether a repeated row was a genuine separate purchase or an accidental duplication in the source export. 133 exact full-row duplicates were identified. Since the fact table is meant to represent distinct sales events, these were treated as accidental duplicates and removed, verified with a before/after reconciliation (675,368 → 675,235 rows, 133 removed), rather than assumed or silently dropped without documentation.
 
 
-5. TRUNCATE vs. DELETE in the ETL process. The ETL process accounts for SQL Server's foreign-key behavior when clearing tables before reloading. A common assumption is that tables can simply be truncated in "child-before-parent" order — but SQL Server blocks TRUNCATE TABLE on any table referenced by a foreign key constraint, even if the referencing table is empty. The reload strategy reflects this: fact.FactSales (referenced by nothing) uses TRUNCATE TABLE; dimensions referenced by foreign-key relationships (DimCustomer, DimGeography, DimProduct, DimDate) use DELETE FROM instead. This respects the database's referential constraints while still providing a fully repeatable reload process.
+5. TRUNCATE vs. DELETE in the ETL process. The ETL process accounts for SQL Server's foreign-key behavior when clearing tables before reloading. A common assumption is that tables can simply be truncated in "child-before-parent" order, but SQL Server blocks TRUNCATE TABLE on any table referenced by a foreign key constraint, even if the referencing table is empty. The reload strategy reflects this: fact.FactSales (referenced by nothing) uses TRUNCATE TABLE; dimensions referenced by foreign-key relationships (DimCustomer, DimGeography, DimProduct, DimDate) use DELETE FROM instead. This respects the database's referential constraints while still providing a fully repeatable reload process.
 
 Data Quality & Validation
 

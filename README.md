@@ -112,11 +112,11 @@ sql
    EXEC etl.sp_NormalizeSales;
 
 
-Technology Stack
-Microsoft SQL Server / T-SQL
-SQL Server Management Studio (SSMS)
-Dimensional Modeling / Star Schema
-ETL via T-SQL stored procedures
+### Technology Stack:
+1. Microsoft SQL Server / T-SQL
+2. SQL Server Management Studio (SSMS)
+3. Dimensional Modeling / Star Schema
+4. ETL via T-SQL stored procedures
 
 
 This project focuses not only on implementing the technical components of a warehouse, but on understanding the source data, documenting assumptions, validating transformation decisions, and designing a model that can support real analytical workloads.

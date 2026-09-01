@@ -69,7 +69,8 @@ Source CSV
    DimCustomer
    DimProduct
    DimGeography
-Schema	Purpose
+   
+### Schema	Purpose
 Staging	Holds raw source data before transformation
 Dim	Contains dimension tables used for analytical slicing and filtering
 Fact	Contains measurable sales events
@@ -146,6 +147,7 @@ Microsoft SQL Server / T-SQL
 SQL Server Management Studio (SSMS)
 Dimensional Modeling / Star Schema
 ETL via T-SQL stored procedures
+
 Project Structure
 sales-data-warehouse/
 │

@@ -106,10 +106,10 @@ sql
 :r init_database.sql
 
 -- 2. Load the raw CSV into staging
-EXEC Staging.sp_Load_Sales_Data;
+   EXEC Staging.sp_Load_Sales_Data;
 
 -- 3. Clean, standardize, and normalize into dimensions and fact
-EXEC etl.sp_NormalizeSales;
+   EXEC etl.sp_NormalizeSales;
 
 
 Technology Stack
